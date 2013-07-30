@@ -7,10 +7,23 @@ sub start {
 
 	if ($element eq "changeset") {
 		$date = $tags{'created_at'};
+		$date =~ s/T.*//;
+
+		if ($date ne $odate) {
+			for $k (keys(%sum)) {
+				print "$sum{$k} $k\n";
+			}
+
+			%sum = ();
+			$odate = $date;
+		}
+
 		$editor = "unknown";
 	} elsif ($element eq "tag") {
 		if ($tags{'k'} eq "created_by") {
 			$editor = $tags{'v'};
+
+			$editor =~ s/ \(.*//; # get rid of JOSM language/build codes
 		}
 	}
 }
@@ -20,7 +33,7 @@ sub end {
 
 	if ($element eq "changeset") {
 		if ($editor ne "unknown") {
-			print "$date $editor\n";
+			$sum{"$date $editor"}++;
 		}
 
 		$date = "";
