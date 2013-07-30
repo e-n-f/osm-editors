@@ -1,0 +1,31 @@
+#!/usr/bin/perl
+
+use XML::Parser;
+
+sub start {
+        my ($expat, $element, %tags) = @_;
+
+	if ($element eq "changeset") {
+		$date = $tags{'created_at'};
+		$editor = "unknown";
+	} elsif ($element eq "tag") {
+		if ($tags{'k'} eq "created_by") {
+			$editor = $tags{'v'};
+		}
+	}
+}
+
+sub end {
+	my ($expat, $element) = @_;
+
+	if ($element eq "changeset") {
+		if ($editor ne "unknown") {
+			print "$date $editor\n";
+		}
+
+		$date = "";
+		$editor = "unknown";
+	}
+}
+
+new XML::Parser(Handlers => { Start => \&start, End => \&end })->parse(*STDIN);
