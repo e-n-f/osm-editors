@@ -1,0 +1,56 @@
+#!/usr/bin/perl
+
+while (<>) {
+	chomp;
+	($count, $date, $name) = split(/ /);
+
+	# $date =~ s/-..$//;
+
+	$total{$date} += $count;
+	$sum{$date}{$name} += $count;
+	$pop{$name} += $count;
+}
+
+@names = sort { $pop{$b} <=> $pop{$a} } keys(%pop);
+
+@names = ("iD", "JOSM/1.5", "Potlatch");
+
+open(DATA, ">data");
+for $name (@names) {
+	last if $eds++ > 20;
+
+	$x = 0;
+	for $day (sort(keys(%total))) {
+		$y{$name} = 100 * ($y[$x] + $sum{$day}{$name} / $total{$day} / 2);
+		$y[$x] += $sum{$day}{$name} / $total{$day};
+		printf DATA ("%d %.6f %.6f\n", $x, $y[$x] * 100, $sum{$day}{$name} / $total{$day} * 100);
+		$x++;
+	}
+
+	print DATA "\n";
+}
+close(DATA);
+
+open(PLOT, ">plot");
+print PLOT "set terminal postscript color \"Helvetica\" 10\n";
+print PLOT "set xtics (0 ";
+$x = 0;
+for $day (sort(keys(%total))) {
+	if ($x % 150 == 0) {
+		print PLOT ", \"$day\" $x";
+	}
+
+	$x++;
+}
+print PLOT ")\n";
+
+$x -= 30;
+$eds = 0;
+for $name (@names) {
+	last if $eds++ > 20;
+	print PLOT "set label \"$name\" at $x, $y{$name} right\n";
+}
+
+print PLOT "plot \"data\" using 1:2 with lines title \"\"\n";
+
+close(PLOT);
