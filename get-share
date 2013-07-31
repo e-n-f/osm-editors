@@ -13,17 +13,21 @@ while (<>) {
 
 @names = sort { $pop{$b} <=> $pop{$a} } keys(%pop);
 
-@names = ("iD", "JOSM/1.5", "Potlatch");
+# @names = ("iD", "JOSM/1.5", "Potlatch", "Merkaartor");
 
 open(DATA, ">data");
+
+print DATA "# day-number cumulative-percentage editor-percentage date count\n";
 for $name (@names) {
-	last if $eds++ > 20;
+	last if $eds++ > 50;
+
+	print DATA "# $name\n";
 
 	$x = 0;
 	for $day (sort(keys(%total))) {
 		$y{$name} = 100 * ($y[$x] + $sum{$day}{$name} / $total{$day} / 2);
 		$y[$x] += $sum{$day}{$name} / $total{$day};
-		printf DATA ("%d %.6f %.6f\n", $x, $y[$x] * 100, $sum{$day}{$name} / $total{$day} * 100);
+		printf DATA ("%d %.6f %.6f %s %d\n", $x, $y[$x] * 100, $sum{$day}{$name} / $total{$day} * 100, $day, $sum{$day}{$name});
 		$x++;
 	}
 
@@ -47,7 +51,7 @@ print PLOT ")\n";
 $x -= 30;
 $eds = 0;
 for $name (@names) {
-	last if $eds++ > 20;
+	last if $eds++ > 50;
 	print PLOT "set label \"$name\" at $x, $y{$name} right\n";
 }
 
