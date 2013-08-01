@@ -9,12 +9,22 @@ sub start {
 		$date = $tags{'created_at'};
 		$date =~ s/T.*//;
 
+		$changesets = $tags{'num_changes'};
+		$who = $tags{'user'};
+		# print "found $who\n";
+
 		if ($date ne $odate) {
 			for $k (keys(%sum)) {
-				print "$sum{$k} $k\n";
+				@users = keys(%{$users{$k}});
+				# print "got @users\n";
+				$nusers = $#users + 1;
+
+				print "$sum{$k} $k $changesum{$k} $nusers\n";
 			}
 
 			%sum = ();
+			%changesum = ();
+			%users = ();
 			$odate = $date;
 		}
 
@@ -34,6 +44,8 @@ sub end {
 	if ($element eq "changeset") {
 		if ($editor ne "unknown") {
 			$sum{"$date $editor"}++;
+			$changesum{"$date $editor"} += $changesets;
+			$users{"$date $editor"}{$who} = 1;
 		}
 
 		$date = "";

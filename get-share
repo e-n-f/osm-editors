@@ -2,7 +2,10 @@
 
 while (<>) {
 	chomp;
-	($count, $date, $name) = split(/ /);
+	($changesets, $date, $name, $changes, $editors) = split(/ /);
+	$count = $changesets;
+	#$count = $changes;
+	#$count = $editors;
 
 	# $date =~ s/-..$//;
 
@@ -13,7 +16,7 @@ while (<>) {
 
 @names = sort { $pop{$b} <=> $pop{$a} } keys(%pop);
 
-# @names = ("iD", "JOSM/1.5", "Potlatch", "Merkaartor");
+@names = ("iD", "JOSM/1.5", "Potlatch");
 
 open(DATA, ">data");
 
