@@ -34,6 +34,7 @@ sub start {
 			$editor = $tags{'v'};
 
 			$editor =~ s/ \(.*//; # get rid of JOSM language/build codes
+			$editor =~ tr/ /_/;
 		}
 	}
 }

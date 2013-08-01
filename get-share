@@ -9,6 +9,8 @@ while (<>) {
 
 	# $date =~ s/-..$//;
 
+	$name =~ s/_.*//;
+
 	$total{$date} += $count;
 	$sum{$date}{$name} += $count;
 	$pop{$name} += $count;
