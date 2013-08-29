@@ -1,28 +1,36 @@
 #!/usr/bin/perl
 
+@fields = ( 'changesets', 'changes', 'users' );
+
 while (<>) {
 	chomp;
-	($changesets, $date, $name, $changes, $editors) = split(/ /);
-	$count = $changesets;
-	#$count = $changes;
-	#$count = $editors;
+	($data{'changesets'}, $date, $name, $data{'changes'}, $data{'users'}) = split(/ /);
 
 	# $date =~ s/-..$//;
 
 	$name =~ s/_.*//;
 
-	$total{$date} += $count;
-	$sum{$date}{$name} += $count;
-	$pop{$name} += $count;
+	for $field (@fields) {
+		$total{$date}{$field} += $data{$field};
+		$sum{$date}{$name}{$field} += $data{$field};
+		$pop{$name}{$field} += $data{$field};
+	}
 }
 
-@names = sort { $pop{$b} <=> $pop{$a} } keys(%pop);
+@names = sort { $pop{$b}{'changesets'} <=> $pop{$a}{'changesets'} } keys(%pop);
 
 @names = ("iD", "JOSM/1.5", "Potlatch");
 
 open(DATA, ">data");
 
-print DATA "# day-number cumulative-percentage editor-percentage date count\n";
+print DATA "#day-number date";
+
+for $field (@fields) {
+	print DATA " $field-percentage $field-count $field-cumulative-percentage";
+}
+
+print DATA "\n";
+
 for $name (@names) {
 	last if $eds++ > 50;
 
@@ -30,10 +38,16 @@ for $name (@names) {
 
 	$x = 0;
 	for $day (sort(keys(%total))) {
-		$y{$name} = 100 * ($y[$x] + $sum{$day}{$name} / $total{$day} / 2);
-		$y[$x] += $sum{$day}{$name} / $total{$day};
-		printf DATA ("%d %.6f %.6f %s %d\n", $x, $y[$x] * 100, $sum{$day}{$name} / $total{$day} * 100, $day, $sum{$day}{$name});
+		printf DATA ("%d %s", $x, $day);
+
+		for $field (@fields) {
+			$y{$name}{$field} = 100 * ($y[$x]{$field} + $sum{$day}{$name}{$field} / $total{$day}{$field} / 2);
+			$y[$x]{$field} += $sum{$day}{$name}{$field} / $total{$day}{$field};
+			printf DATA (" %.6f %d %.6f", $sum{$day}{$name}{$field} / $total{$day}{$field} * 100, $sum{$day}{$name}{$field}, $y[$x]{$field} * 100);
+		}
+
 		$x++;
+		print DATA "\n";
 	}
 
 	print DATA "\n";
@@ -57,9 +71,9 @@ $x -= 30;
 $eds = 0;
 for $name (@names) {
 	last if $eds++ > 50;
-	print PLOT "set label \"$name\" at $x, $y{$name} right\n";
+	print PLOT "set label \"$name\" at $x, $y{$name}{'changesets'} right\n";
 }
 
-print PLOT "plot \"data\" using 1:2 with lines title \"\"\n";
+print PLOT "plot \"data\" using 1:5 with lines title \"\"\n";
 
 close(PLOT);
