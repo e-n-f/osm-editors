@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 use XML::Parser;
+binmode STDOUT, ":utf8";
 
 sub start {
         my ($expat, $element, %tags) = @_;
