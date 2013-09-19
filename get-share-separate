@@ -1,0 +1,85 @@
+#!/usr/bin/perl
+
+@fields = ( 'changesets', 'changes', 'users' );
+
+while (<>) {
+	chomp;
+	($data{'changesets'}, $date, $name, $data{'changes'}, $data{'users'}) = split(/ /);
+
+	# $date =~ s/-..$//;
+
+	$name =~ s/_.*//;
+
+	for $field (@fields) {
+		$total{$date}{$field} += $data{$field};
+		$sum{$date}{$name}{$field} += $data{$field};
+		$pop{$name}{$field} += $data{$field};
+
+		$sum{$date}{'all'}{$field} += $data{$field};
+		$pop{'all'}{$field} += $data{$field};
+	}
+}
+
+@names = sort { $pop{$b}{'changesets'} <=> $pop{$a}{'changesets'} } keys(%pop);
+
+@names = ("iD", "JOSM/1.5", "Potlatch", 'all');
+
+for $name (@names) {
+	$name2 = $name;
+	$name2 =~ tr/\//-/;
+
+	open(DATA, ">data-$name2");
+
+	print DATA "#day-number date";
+
+	for $field (@fields) {
+		print DATA " $field-percentage $field-count $field-cumulative-percentage";
+	}
+
+	print DATA "\n";
+
+	last if $eds++ > 50;
+
+	print DATA "# $name\n";
+
+	$x = 0;
+	for $day (sort(keys(%total))) {
+		printf DATA ("%d %s", $x, $day);
+
+		for $field (@fields) {
+			$y{$name}{$field} = 100 * ($y[$x]{$field} + $sum{$day}{$name}{$field} / $total{$day}{$field} / 2);
+			$y[$x]{$field} += $sum{$day}{$name}{$field} / $total{$day}{$field};
+			printf DATA (" %.6f %d %.6f", $sum{$day}{$name}{$field} / $total{$day}{$field} * 100, $sum{$day}{$name}{$field}, $y[$x]{$field} * 100);
+		}
+
+		$x++;
+		print DATA "\n";
+	}
+
+	print DATA "\n";
+}
+close(DATA);
+
+open(PLOT, ">plot");
+print PLOT "set terminal postscript color \"Helvetica\" 10\n";
+print PLOT "set xtics (0 ";
+$x = 0;
+for $day (sort(keys(%total))) {
+	if ($x % 150 == 0) {
+		print PLOT ", \"$day\" $x";
+	}
+
+	$x++;
+}
+print PLOT ")\n";
+
+$x -= 30;
+$eds = 0;
+for $name (@names) {
+	last if $eds++ > 50;
+	print PLOT "set label \"$name\" at $x, $y{$name}{'changesets'} right\n";
+}
+
+print PLOT "plot \"data\" using 1:5 with lines title \"\"\n";
+
+close(PLOT);
